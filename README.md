@@ -1,50 +1,130 @@
-# Welcome to your Expo app 👋
+# Pokedex (Expo + React Native)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Small Pokédex app (Expo + TypeScript) that lists Pokémon, shows details and evolution chains with artwork.
 
-## Get started
+## Features
+- List of Pokémon (first 70) with sprites and primary type color
+- Details screen with height, weight, types and official artwork
+- Evolution chain parsing and display with images
+- File-based routing via `expo-router` (dynamic route `[name].tsx`)
+
+## Repo layout
+- app/
+  - index.tsx       — Home list
+  - [name].tsx      — Dynamic details (fetches evolutions & images)
+  - _layout.tsx     — Stack layout & presentation
+- package.json
+- tsconfig.json
+- babel.config.js (module-resolver for path aliases)
+
+## Prerequisites
+- Node.js (16+ recommended)
+- npm
+- Expo CLI: `npm install -g expo-cli` (or use `npx expo`)
+- Android SDK (if you use emulator) and emulator/adb on PATH
+- Expo Go on device / emulator (or use dev client)
+
+## Quick start (development)
 
 1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Start Metro / Expo
+```powershell
+npx expo start
+# To force clear cache:
+npx expo start -c
+```
 
-## Learn more
+3. Open on Android emulator / device
+- With emulator already running:
+```powershell
+# ensure adb reverse so device can reach the dev server
+& "C:\Users\User\AppData\Local\Android\Sdk\platform-tools\adb.exe" reverse tcp:8081 tcp:8081
+& "C:\Users\User\AppData\Local\Android\Sdk\platform-tools\adb.exe" reverse tcp:19000 tcp:19000
 
-To learn more about developing your project with Expo, look at the following resources:
+# then from the expo terminal press "a" or:
+npx expo start --android
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- If using a physical device, open Expo Go and scan the QR code shown by `expo start` (use LAN or Tunnel connection depending on network).
 
-## Join the community
+## Create / launch Android emulator (example)
+Replace AVD name with yours (`MyPixel`, `Medium_Phone_API_36.1`, etc.)
 
-Join our community of developers creating universal apps.
+```powershell
+$SDK = "C:\Users\User\AppData\Local\Android\Sdk"
+# start emulator
+& "$SDK\emulator\emulator.exe" -avd MyPixel
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# check devices
+& "$SDK\platform-tools\adb.exe" devices
+```
+
+If `adb` shows device as `offline`, restart adb:
+```powershell
+& "$SDK\platform-tools\adb.exe" kill-server
+Start-Sleep -s 1
+& "$SDK\platform-tools\adb.exe" start-server
+& "$SDK\platform-tools\adb.exe" devices
+```
+
+## Common issues & fixes
+
+- Expo Go not installed on emulator:
+  - Install Expo Go from Play Store on the emulator, or use `npx expo start --tunnel` and open the QR code on a physical device.
+
+- Device offline / ADB issues:
+  - Kill and restart adb (see commands above).
+  - Cold-boot emulator: `& "$SDK\emulator\emulator.exe" -avd MyPixel -wipe-data`
+
+- Slow Expo Go loading:
+  - Use `expo start -c`
+  - Prefer LAN connection (if same network) instead of Tunnel
+  - Use `adb reverse` for emulator/device to connect directly to Metro
+
+- RN Web errors (style arrays / gap):
+  - React Native Web does not accept style arrays or CSS `gap`. Merge style objects (spread) and use margins.
+
+## Details about implementation
+- Home (`app/index.tsx`):
+  - Fetches `https://pokeapi.co/api/v2/pokemon/?limit=70`
+  - Uses `Promise.all()` to fetch details for each Pokémon in parallel
+  - Normalizes `types` from API to an array of `{ name, url }`
+
+- Details (`app/[name].tsx`):
+  - Fetches Pokémon by name, then species data to get `evolution_chain.url`
+  - Parses the evolution chain tree recursively
+  - Fetches each evolution's Pokémon data to obtain `sprites.other["official-artwork"].front_default`
+  - Falls back to ID-based artwork URL when necessary
+
+## Git / deploy
+- Add remote and push:
+```powershell
+git remote add origin https://github.com/<your-repo>.git
+git add .
+git commit -m "Initial Pokedex"
+git push -u origin main
+```
+
+## Extending / next steps
+- Add search and filters
+- Add favorites and local persistence
+- Show abilities and stats
+- Improve UI/UX and accessibility
+- Create an EAS dev client to avoid Expo Go bundle download every run
+
+## Troubleshooting help
+If you hit a specific runtime error, copy the terminal/Metro log and the stack trace and reopen an issue or run:
+```powershell
+# restart dev server with verbose logs
+npx expo start --tunnel
+```
+
+---
+
+If you want, I can:
+- Add this README file to the repo and commit it (`create+commit`), or
+- Generate a small CONTRIBUTING.md and PR template next.
