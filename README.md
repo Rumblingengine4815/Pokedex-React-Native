@@ -125,6 +125,3 @@ npx expo start --tunnel
 
 ---
 
-If you want, I can:
-- Add this README file to the repo and commit it (`create+commit`), or
-- Generate a small CONTRIBUTING.md and PR template next.
